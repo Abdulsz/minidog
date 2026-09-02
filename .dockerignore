@@ -1,0 +1,8 @@
+.git
+.idea
+.maven-cache
+data
+target
+*.class
+HELP.md
+minidog-build-plan.md
