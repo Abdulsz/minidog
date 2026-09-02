@@ -26,4 +26,10 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError("invalid_request", List.of(detail)));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new ApiError("invalid_request", List.of(exception.getMessage())));
+    }
 }

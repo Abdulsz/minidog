@@ -3,7 +3,11 @@ package com.project.minidog.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "minidog.pipeline")
-public record PipelineProperties(int queueCapacity, int workerCount, int cardinalityLimit) {
+public record PipelineProperties(
+        int queueCapacity,
+        int workerCount,
+        int cardinalityLimit,
+        int flushIntervalSeconds) {
 
     public PipelineProperties {
         if (queueCapacity <= 0) {
@@ -14,6 +18,9 @@ public record PipelineProperties(int queueCapacity, int workerCount, int cardina
         }
         if (cardinalityLimit <= 0) {
             throw new IllegalArgumentException("cardinality limit must be positive");
+        }
+        if (flushIntervalSeconds <= 0) {
+            throw new IllegalArgumentException("flush interval must be positive");
         }
     }
 }

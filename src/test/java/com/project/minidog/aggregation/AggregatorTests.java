@@ -67,6 +67,18 @@ class AggregatorTests {
         assertThat(snapshot.p99()).isNull();
     }
 
+    @Test
+    void drainReturnsAWindowAndStartsTheNextOneEmpty() {
+        Aggregator aggregator = new Aggregator();
+        aggregator.accept(event(5, Map.of("env", "test")));
+
+        Map<MetricKey, AggregateSnapshot> drained = aggregator.drain();
+
+        assertThat(drained).hasSize(1);
+        assertThat(drained.values().iterator().next().sum()).isEqualTo(5);
+        assertThat(aggregator.snapshot()).isEmpty();
+    }
+
     private MetricEvent event(double value, Map<String, String> tags) {
         return new MetricEvent("api.request.duration", value, MetricType.HISTOGRAM, tags, 1);
     }

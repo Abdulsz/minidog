@@ -74,7 +74,7 @@ class CardinalityLimiterTests {
     }
 
     private CardinalityLimiter limiterWithLimit(int limit) {
-        return new CardinalityLimiter(new PipelineProperties(10, 1, limit));
+        return new CardinalityLimiter(new PipelineProperties(10, 1, limit, 10));
     }
 
     private MetricEvent event(String name, String service) {
