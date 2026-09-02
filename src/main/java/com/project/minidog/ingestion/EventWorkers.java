@@ -8,6 +8,7 @@ import jakarta.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,9 @@ public class EventWorkers {
     private final Aggregator aggregator;
     private final CardinalityLimiter cardinalityLimiter;
     private final int workerCount;
+    private final LongAdder aggregatedEvents = new LongAdder();
+    private final LongAdder cardinalityDroppedEvents = new LongAdder();
+    private final LongAdder failedEvents = new LongAdder();
     private ExecutorService executor;
 
     public EventWorkers(
@@ -50,12 +54,15 @@ public class EventWorkers {
                 var event = eventQueue.take();
                 if (cardinalityLimiter.allow(event)) {
                     aggregator.accept(event);
+                    aggregatedEvents.increment();
                 } else {
+                    cardinalityDroppedEvents.increment();
                     log.debug("Dropping metric event after cardinality limit: {}", event.name());
                 }
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
             } catch (RuntimeException exception) {
+                failedEvents.increment();
                 log.error("Dropping metric event after worker failure", exception);
             }
         }
@@ -74,5 +81,21 @@ public class EventWorkers {
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    public int workerCount() {
+        return workerCount;
+    }
+
+    public long aggregatedEventCount() {
+        return aggregatedEvents.sum();
+    }
+
+    public long cardinalityDroppedEventCount() {
+        return cardinalityDroppedEvents.sum();
+    }
+
+    public long failedEventCount() {
+        return failedEvents.sum();
     }
 }

@@ -43,6 +43,15 @@ public class Aggregator {
         }
     }
 
+    public int activeSeriesCount() {
+        lock.readLock().lock();
+        try {
+            return aggregates.size();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
     private Map<MetricKey, AggregateSnapshot> snapshotOf(
             ConcurrentHashMap<MetricKey, MetricAccumulator> source) {
         return source.entrySet().stream()

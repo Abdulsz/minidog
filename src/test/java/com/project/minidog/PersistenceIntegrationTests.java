@@ -96,6 +96,19 @@ class PersistenceIntegrationTests {
                 .andExpect(jsonPath("$.error").value("invalid_request"));
     }
 
+    @Test
+    void exposesPipelineStatusAndHealth() throws Exception {
+        mockMvc.perform(get("/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.queueCapacity").value(10000))
+                .andExpect(jsonPath("$.workerCount").value(2))
+                .andExpect(jsonPath("$.acceptedEvents").isNumber());
+
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
     private MetricEvent event(String name, double value, String service) {
         return new MetricEvent(
                 name, value, MetricType.HISTOGRAM, Map.of("service", service), 1);

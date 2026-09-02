@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,9 @@ public class AggregateFlusher {
     private final int intervalSeconds;
     private ScheduledExecutorService scheduler;
     private Map<MetricKey, AggregateSnapshot> pending = Map.of();
+    private final LongAdder persistedSeries = new LongAdder();
+    private final LongAdder failedFlushes = new LongAdder();
+    private volatile long lastSuccessfulFlush;
 
     public AggregateFlusher(
             Aggregator aggregator,
@@ -67,6 +71,8 @@ public class AggregateFlusher {
                 .toList();
         repository.saveAll(records);
         pending = Map.of();
+        persistedSeries.add(records.size());
+        lastSuccessfulFlush = bucketTime;
         return records.size();
     }
 
@@ -77,6 +83,7 @@ public class AggregateFlusher {
                 log.debug("Persisted {} metric aggregates", count);
             }
         } catch (RuntimeException exception) {
+            failedFlushes.increment();
             log.error("Aggregate flush failed; retaining the batch for retry", exception);
         }
     }
@@ -87,5 +94,17 @@ public class AggregateFlusher {
             scheduler.shutdownNow();
         }
         flushSafely();
+    }
+
+    public long persistedSeriesCount() {
+        return persistedSeries.sum();
+    }
+
+    public long failedFlushCount() {
+        return failedFlushes.sum();
+    }
+
+    public long lastSuccessfulFlush() {
+        return lastSuccessfulFlush;
     }
 }
