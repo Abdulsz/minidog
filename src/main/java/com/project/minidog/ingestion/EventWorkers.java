@@ -1,6 +1,7 @@
 package com.project.minidog.ingestion;
 
 import com.project.minidog.aggregation.Aggregator;
+import com.project.minidog.aggregation.CardinalityLimiter;
 import com.project.minidog.config.PipelineProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -18,12 +19,18 @@ public class EventWorkers {
 
     private final EventQueue eventQueue;
     private final Aggregator aggregator;
+    private final CardinalityLimiter cardinalityLimiter;
     private final int workerCount;
     private ExecutorService executor;
 
-    public EventWorkers(EventQueue eventQueue, Aggregator aggregator, PipelineProperties properties) {
+    public EventWorkers(
+            EventQueue eventQueue,
+            Aggregator aggregator,
+            CardinalityLimiter cardinalityLimiter,
+            PipelineProperties properties) {
         this.eventQueue = eventQueue;
         this.aggregator = aggregator;
+        this.cardinalityLimiter = cardinalityLimiter;
         this.workerCount = properties.workerCount();
     }
 
@@ -40,7 +47,12 @@ public class EventWorkers {
     private void processEvents() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                aggregator.accept(eventQueue.take());
+                var event = eventQueue.take();
+                if (cardinalityLimiter.allow(event)) {
+                    aggregator.accept(event);
+                } else {
+                    log.debug("Dropping metric event after cardinality limit: {}", event.name());
+                }
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
             } catch (RuntimeException exception) {

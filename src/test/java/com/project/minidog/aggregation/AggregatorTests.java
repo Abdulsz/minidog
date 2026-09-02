@@ -43,6 +43,30 @@ class AggregatorTests {
         assertThat(snapshot.sum()).isEqualTo(eventCount);
     }
 
+    @Test
+    void calculatesNearestRankHistogramPercentiles() {
+        Aggregator aggregator = new Aggregator();
+        for (int value = 1; value <= 100; value++) {
+            aggregator.accept(event(value, Map.of("env", "test")));
+        }
+
+        AggregateSnapshot snapshot = aggregator.snapshot().values().iterator().next();
+        assertThat(snapshot.p50()).isEqualTo(50);
+        assertThat(snapshot.p95()).isEqualTo(95);
+        assertThat(snapshot.p99()).isEqualTo(99);
+    }
+
+    @Test
+    void omitsPercentilesForNonHistogramMetrics() {
+        Aggregator aggregator = new Aggregator();
+        aggregator.accept(new MetricEvent("temperature", 20, MetricType.GAUGE, Map.of(), 1));
+
+        AggregateSnapshot snapshot = aggregator.snapshot().values().iterator().next();
+        assertThat(snapshot.p50()).isNull();
+        assertThat(snapshot.p95()).isNull();
+        assertThat(snapshot.p99()).isNull();
+    }
+
     private MetricEvent event(double value, Map<String, String> tags) {
         return new MetricEvent("api.request.duration", value, MetricType.HISTOGRAM, tags, 1);
     }

@@ -44,6 +44,12 @@ public record IngestRequest(
         return events != null || timestamp == null || timestamp >= 0;
     }
 
+    @AssertTrue(message = "tag keys and values must not be null")
+    public boolean areTagsValid() {
+        return events != null || tags == null || tags.entrySet().stream()
+                .allMatch(entry -> entry.getKey() != null && entry.getValue() != null);
+    }
+
     public List<MetricEvent> toEvents(Clock clock) {
         if (events != null) {
             return events.stream().map(event -> event.toEvent(clock)).toList();

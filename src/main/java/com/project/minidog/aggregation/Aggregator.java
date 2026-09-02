@@ -12,7 +12,7 @@ public class Aggregator {
     private final ConcurrentHashMap<MetricKey, MetricAccumulator> aggregates = new ConcurrentHashMap<>();
 
     public void accept(MetricEvent event) {
-        aggregates.computeIfAbsent(MetricKey.from(event), ignored -> new MetricAccumulator())
+        aggregates.computeIfAbsent(MetricKey.from(event), ignored -> new MetricAccumulator(event.type()))
                 .add(event.value());
     }
 

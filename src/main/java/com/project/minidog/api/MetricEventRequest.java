@@ -22,6 +22,12 @@ public record MetricEventRequest(
         return value == null || Double.isFinite(value);
     }
 
+    @AssertTrue(message = "tag keys and values must not be null")
+    public boolean areTagsValid() {
+        return tags == null || tags.entrySet().stream()
+                .allMatch(entry -> entry.getKey() != null && entry.getValue() != null);
+    }
+
     public MetricEvent toEvent(Clock clock) {
         long eventTimestamp = timestamp == null ? clock.instant().getEpochSecond() : timestamp;
         return new MetricEvent(name, value, type, tags, eventTimestamp);

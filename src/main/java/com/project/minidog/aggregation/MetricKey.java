@@ -14,7 +14,11 @@ public record MetricKey(String name, MetricType type, String tagCombination) {
     static String serializeTags(Map<String, String> tags) {
         return tags.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                .collect(Collectors.joining(","));
+                .map(entry -> encode(entry.getKey()) + encode(entry.getValue()))
+                .collect(Collectors.joining());
+    }
+
+    private static String encode(String value) {
+        return value.length() + ":" + value;
     }
 }
