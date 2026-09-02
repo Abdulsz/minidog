@@ -164,7 +164,8 @@ environment-variable form.
 ## Operations
 
 - `GET /status` — queue, worker, drop, aggregation, and flush counters.
-- `GET /actuator/health` — database, liveness, readiness, disk, and process health.
+- `GET /actuator/health` — aggregate service health without sensitive details.
+- `GET /actuator/health/liveness` and `/readiness` — probe groups.
 - `GET /actuator/metrics` — Micrometer metric discovery.
 - `GET /actuator/prometheus` — Prometheus exposition format.
 

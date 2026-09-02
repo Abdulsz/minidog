@@ -11,9 +11,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 @Component
+@DependsOn("aggregateFlusher")
 public class EventWorkers {
 
     private static final Logger log = LoggerFactory.getLogger(EventWorkers.class);
@@ -72,6 +74,15 @@ public class EventWorkers {
     void stop() {
         if (executor == null) {
             return;
+        }
+        long drainDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (eventQueue.size() > 0 && System.nanoTime() < drainDeadline) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
         executor.shutdownNow();
         try {

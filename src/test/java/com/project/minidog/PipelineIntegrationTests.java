@@ -60,6 +60,8 @@ class PipelineIntegrationTests {
                 metricName, 100, MetricType.COUNTER, Map.of("service", "billing"), 1);
 
         assertThat(eventQueue.offer(established)).isTrue();
+        await(() -> cardinalityLimiter.combinationCount(metricName) == 1
+                && aggregator.snapshot().get(MetricKey.from(established)) != null);
         assertThat(eventQueue.offer(overflow)).isTrue();
         assertThat(eventQueue.offer(established)).isTrue();
 

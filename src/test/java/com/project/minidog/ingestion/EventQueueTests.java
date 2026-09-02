@@ -19,6 +19,9 @@ class EventQueueTests {
         assertThat(eventQueue.offer(first)).isTrue();
         assertThat(eventQueue.offerAll(List.of(event("second"), event("third")))).isFalse();
         assertThat(eventQueue.size()).isEqualTo(1);
+        assertThat(eventQueue.capacity()).isEqualTo(2);
+        assertThat(eventQueue.acceptedEventCount()).isEqualTo(1);
+        assertThat(eventQueue.rejectedEventCount()).isEqualTo(2);
     }
 
     private MetricEvent event(String name) {
